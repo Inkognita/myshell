@@ -14,6 +14,9 @@
 #include <wordexp.h>
 #include <string>
 #include <stdlib.h>
+#include <limits.h>
+#include <readline/history.h>
+#include <readline/readline.h>
 
 
 int ERRNO = 0;
@@ -71,10 +74,10 @@ void mpwd(vector<string> params) {
     cout << sub_buf << endl;
 }
 
-void print_identifier() {
+string get_identifier() {
     char sub_buf[BUFF_SIZE];
     getcwd(sub_buf, BUFF_SIZE);
-    cout << sub_buf << "$ ";
+    return string(sub_buf) + "$ ";
 }
 
 void mexit(vector<string> params) {
@@ -89,7 +92,11 @@ void mexit(vector<string> params) {
             return;
         }
     }
-    if (!isdigit(atoi(params[1].c_str()))) {
+    cout << "p:" << params[1] << "H" << endl;
+    if (!(std::find_if(params[1].begin(),
+                      params[1].end(),
+                      [](char c) { return !std::isdigit(c); }) == params[1].end()
+            )) {
         ERRNO = -1;
         cout << "Code must be a digit" << endl;
         return;
@@ -240,15 +247,19 @@ int main(int argc, char *argv[]) {
 
     std::string cur;
 
-    print_identifier();
 
-    while (getline(cin, cur)) {
+    char* line;
+
+//    while (getline(cin, cur)) {
+    while ((line = readline(get_identifier().c_str())) != nullptr) {
+        if (*line) add_history(line);
+        cur = string(line);
+        free(line);
         vector<string> params;
 
         params = divide_into_argumens(cur);
 
         if (params.size() == 0) {
-            print_identifier();
             continue;
         } else if (params[0] == "help") {
             help();
@@ -263,9 +274,6 @@ int main(int argc, char *argv[]) {
         } else {
             create_subprocess(params);
         }
-
-
-        print_identifier();
     }
 
     cout << endl << "Bye bye" << endl;
