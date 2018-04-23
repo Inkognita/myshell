@@ -32,11 +32,16 @@ std::vector<std::string> expand_env(const std::string &var) {
 
     wordexp_t p;
     if (!wordexp(var.c_str(), &p, 0)) {
-        if (p.we_wordc)
+        if (p.we_wordc){
             for (char **exp = p.we_wordv; *exp; ++exp)
+            {
                 vars.push_back(exp[0]);
+            }
+        }
+
         wordfree(&p);
     }
+
     return vars;
 }
 
@@ -92,7 +97,6 @@ void mexit(vector<string> params) {
             return;
         }
     }
-    cout << "p:" << params[1] << "H" << endl;
     if (!(std::find_if(params[1].begin(),
                       params[1].end(),
                       [](char c) { return !std::isdigit(c); }) == params[1].end()
@@ -142,7 +146,7 @@ std::vector<std::string> divide_into_argumens(std::string line) {
         if (symbol == '\\') {
             previous_backslash = true;
         } else if (symbol == '\'') {
-            if (previous_backslash or opened_double_quotes) {
+            if (previous_backslash || opened_double_quotes) {
                 current_word += '\'';
             } else {
                 if (opened_single_quotes) {
@@ -188,6 +192,7 @@ std::vector<std::string> divide_into_argumens(std::string line) {
         } else if (symbol == ' ') {
             previous_backslash = false;
             if (opened_double_quotes || opened_single_quotes) {
+                current_word += "\\";
                 current_word += symbol;
             } else {
                 if (current_word.size() > 0) {
@@ -282,9 +287,6 @@ int main(int argc, char *argv[]) {
 
         params = divide_into_argumens(cur);
 
-        for(string el: params) {
-            cout << el << endl;
-        }
         if (params.size() == 0) {
             continue;
         } else if (params[0] == "help") {
