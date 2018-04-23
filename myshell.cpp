@@ -148,7 +148,14 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                 if (opened_single_quotes) {
                     opened_single_quotes = false;
                     if (current_word.size() > 0) {
-                        parameters.push_back(current_word);
+                        if (parameters.size() > 0) {
+                            for (auto arg : expand_env(current_word)) {
+                                parameters.push_back(arg);
+                                
+                            }
+                        } else {
+                            parameters.push_back(current_word);
+                        }
                         current_word = "";
                     }
                 } else {
@@ -166,6 +173,7 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                         if (parameters.size() > 0) {
                             for (auto arg : expand_env(current_word)) {
                                 parameters.push_back(arg);
+                                
                             }
                         } else {
                             parameters.push_back(current_word);
@@ -183,7 +191,14 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                 current_word += symbol;
             } else {
                 if (current_word.size() > 0) {
-                    parameters.push_back(current_word);
+                    if (parameters.size() > 0) {
+                        for (auto arg : expand_env(current_word)) {
+                            parameters.push_back(arg);
+                            
+                        }
+                    } else {
+                        parameters.push_back(current_word);
+                    }
                     current_word = "";
                 }
             }
@@ -201,7 +216,14 @@ std::vector<std::string> divide_into_argumens(std::string line) {
         return parameters;
     }
     if (current_word.size() > 0) {
-        parameters.push_back(current_word);
+        if (parameters.size() > 0) {
+            for (auto arg : expand_env(current_word)) {
+                parameters.push_back(arg);
+                
+            }
+        } else {
+            parameters.push_back(current_word);
+        }
     }
     return parameters;
 }
@@ -254,11 +276,15 @@ int main(int argc, char *argv[]) {
     while ((line = readline(get_identifier().c_str())) != nullptr) {
         if (*line) add_history(line);
         cur = string(line);
+
         free(line);
         vector<string> params;
 
         params = divide_into_argumens(cur);
 
+        for(string el: params) {
+            cout << el << endl;
+        }
         if (params.size() == 0) {
             continue;
         } else if (params[0] == "help") {
