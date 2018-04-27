@@ -17,6 +17,7 @@
 #include <limits.h>
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <map>
 
 
 int ERRNO = 0;
@@ -25,6 +26,7 @@ int ERRNO = 0;
 #define BUFF_SIZE 10000
 using namespace std;
 extern char **environ;
+map <string,string> vars_env;
 
 
 std::vector<std::string> expand_env(const std::string &var) {
@@ -84,6 +86,24 @@ string get_identifier() {
     getcwd(sub_buf, BUFF_SIZE);
     return string(sub_buf) + "$ ";
 }
+
+void dot(vector<string> params){
+    // To DO:  виконати його в поточному інтерпретаторі
+}
+
+void mecho(string param){
+    // вивід вмісту змінної
+    for (auto it = vars_env.begin(); it != vars_env.end(); ++it)
+    {
+        if((*it).second == param){cout << (*it).second << endl;}
+
+    }
+}
+
+void mexport(string param){
+    // To DO:  додати змінну до блоку змінних середовища дочірнього процесу
+}
+
 
 void mexit(vector<string> params) {
     ERRNO = 0;
@@ -207,6 +227,21 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                     current_word = "";
                 }
             }
+        }else if (symbol == '#') {
+            // coment
+            previous_backslash = false;
+            if (opened_double_quotes || opened_single_quotes) {
+                current_word += "\\";
+                current_word += symbol;
+            } else {
+                if (current_word.size() > 0) {
+                    current_word += symbol;
+
+                }
+                else {
+
+                    return parameters;}
+            }
         } else {
             if (previous_backslash) {
                 current_word += '\\';
@@ -299,6 +334,10 @@ int main(int argc, char *argv[]) {
             mpwd(params);
         } else if (params[0] == "merrno") {
             merrno(params);
+        } else if (params[0] == "mecho") {
+            mecho(params[1]);
+        } else if (params[0] == ".") {
+            dot(params);
         } else {
             create_subprocess(params);
         }
