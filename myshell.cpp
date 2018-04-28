@@ -22,12 +22,12 @@
 
 int ERRNO = 0;
 
-
+// якщо баш запускають, хай чекає аргументи
 #define BUFF_SIZE 10000
 using namespace std;
 extern char **environ;
-map <string,string> vars_env;
-
+map <string, string> vars_local;
+map <string, string> vars_export;
 
 std::vector<std::string> expand_env(const std::string &var) {
     std::vector<std::string> vars;
@@ -91,13 +91,13 @@ void dot(vector<string> params){
     // To DO:  виконати його в поточному інтерпретаторі
 }
 
-void mecho(string param){
+void mecho(vector<string> args){
     // вивід вмісту змінної
-    for (auto it = vars_env.begin(); it != vars_env.end(); ++it)
-    {
-        if((*it).second == param){cout << (*it).second << endl;}
-
-    }
+//    for (auto it = vars_env.begin(); it != vars_env.end(); ++it)
+//    {
+//        if((*it).second == param){cout << (*it).second << endl;}
+//
+//    }
 }
 
 void mexport(string param){
@@ -153,6 +153,48 @@ void help() {
     printf("merrno - returns exit code of last func or program called\n");
 }
 
+string check_var(string arg){
+   if(arg[0] == "$"){
+       map<string, string>::iterator pair;
+       pair = m.find(arg.substr(1));
+       if(pair != m.end()){
+            return pair->second;}
+       else{
+           cout<< "Have no variable : "<< arg.substr(1)<< endl;
+           return "";}
+   }
+   return arg;
+}
+
+std::vector<std::string> post_process_args(std::vector<std::string> args) {
+    int i = 0;
+    std::vector<std::string> res;
+    if (args.size > 0 && args[0] == "mexport") {
+        if(args.size() > 1) {
+            if((args[1].find("=") != std::string::npos) && (args[1].find("\\=") == std::string::npos)) {
+                // creating and exporting
+            }
+            else {
+                // export first var
+            }
+        }
+        else {
+            cout << "parse error" << endl;
+        }
+        return res;
+    }
+    for(; i<args.size();i++) {
+        if((args[i].find("=") != std::string::npos) && (args[i].find("\\=") == std::string::npos)) {
+            // making var
+        }
+        else {
+            arg = check_var(args[i]);
+            res.push_back(arg);
+        }
+    }
+    return res;
+}
+
 std::vector<std::string> divide_into_argumens(std::string line) {
     std::vector<std::string> parameters;
     if (line.length() == 0) {
@@ -162,9 +204,16 @@ std::vector<std::string> divide_into_argumens(std::string line) {
     bool opened_single_quotes = false;
     bool opened_double_quotes = false;
     bool previous_backslash = false;
+    bool var = false; // ira
     for (auto symbol : line) {
         if (symbol == '\\') {
-            previous_backslash = true;
+            if (previous_backslash) {
+                current_word += "\\";
+                previous_backslash = false;
+            }
+            else {
+                previous_backslash = true;
+            }
         } else if (symbol == '\'') {
             if (previous_backslash || opened_double_quotes) {
                 current_word += '\'';
@@ -172,14 +221,9 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                 if (opened_single_quotes) {
                     opened_single_quotes = false;
                     if (current_word.size() > 0) {
-                        if (parameters.size() > 0) {
-                            for (auto arg : expand_env(current_word)) {
-                                parameters.push_back(arg);
-                                
-                            }
-                        } else {
-                            parameters.push_back(current_word);
-                        }
+
+                        parameters.push_back(current_word);
+
                         current_word = "";
                     }
                 } else {
@@ -195,11 +239,13 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                     opened_double_quotes = false;
                     if (current_word.size() > 0) {
                         if (parameters.size() > 0) {
+                            current_word = check_var(current_word);
                             for (auto arg : expand_env(current_word)) {
                                 parameters.push_back(arg);
                                 
                             }
                         } else {
+                            current_word = check_var(current_word);
                             parameters.push_back(current_word);
                         }
                         current_word = "";
@@ -217,31 +263,36 @@ std::vector<std::string> divide_into_argumens(std::string line) {
             } else {
                 if (current_word.size() > 0) {
                     if (parameters.size() > 0) {
+                        current_word = check_var(current_word);
                         for (auto arg : expand_env(current_word)) {
                             parameters.push_back(arg);
-                            
+
                         }
                     } else {
+                        current_word = check_var(current_word);
                         parameters.push_back(current_word);
                     }
                     current_word = "";
                 }
             }
         }else if (symbol == '#') {
-            // coment
             previous_backslash = false;
             if (opened_double_quotes || opened_single_quotes) {
-                current_word += "\\";
                 current_word += symbol;
             } else {
                 if (current_word.size() > 0) {
                     current_word += symbol;
-
                 }
                 else {
-
-                    return parameters;}
+                    return parameters;
+                }
             }
+        }else if (symbol == '=') {
+
+            if (opened_double_quotes || opened_single_quotes || previous_backslash) {
+                current_word += "\\";}
+            current_word += symbol;
+            previous_backslash = false;
         } else {
             if (previous_backslash) {
                 current_word += '\\';
@@ -258,10 +309,11 @@ std::vector<std::string> divide_into_argumens(std::string line) {
     if (current_word.size() > 0) {
         if (parameters.size() > 0) {
             for (auto arg : expand_env(current_word)) {
+                arg = check_var(arg);
                 parameters.push_back(arg);
-                
             }
         } else {
+            current_word = check_var(current_word);
             parameters.push_back(current_word);
         }
     }
@@ -321,6 +373,7 @@ int main(int argc, char *argv[]) {
         vector<string> params;
 
         params = divide_into_argumens(cur);
+        params = post_process_args(params);
 
         if (params.size() == 0) {
             continue;
@@ -335,7 +388,7 @@ int main(int argc, char *argv[]) {
         } else if (params[0] == "merrno") {
             merrno(params);
         } else if (params[0] == "mecho") {
-            mecho(params[1]);
+            mecho(params);
         } else if (params[0] == ".") {
             dot(params);
         } else {
