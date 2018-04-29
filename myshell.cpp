@@ -155,7 +155,7 @@ void help() {
 
 string check_var(string arg){
     // there is a fail To Do : fix
-   if(arg[0] == "$"){
+   if(arg.substr(0) == "$"){
        map<string, string>::iterator pair;
        pair = vars_local.find(arg.substr(1));
        if(pair != vars_local.end()){
@@ -184,7 +184,7 @@ void set_var_as_export(string var){
 std::vector<std::string> post_process_args(std::vector<std::string> args) {
     int i = 0;
     std::vector<std::string> res;
-    if (args.size > 0 && args[0] == "mexport") {
+    if (args.size() > 0 && args[0] == "mexport") {
         if(args.size() > 1) {
             if((args[1].find("=") != std::string::npos) && (args[1].find("\\=") == std::string::npos)) {
                 // creating and exporting
