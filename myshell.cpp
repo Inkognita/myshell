@@ -118,9 +118,35 @@ void mecho(vector<string> args){
     cout << endl;
 }
 
+void set_var_as_export(string var);
 
-void mexport(string param){
+void mexport(vector<string> params){
     // To DO:  додати змінну до блоку змінних середовища дочірнього процесу
+    ERRNO = 0;
+    if(params.size() > 1) {
+        if((params[1].find("=") != std::string::npos) && (params[1].find("\\=") == std::string::npos)) {
+            // creating and exporting
+            set_var_as_export(params[1]);
+        }
+        else {
+            // export first var
+
+            map<string, string>::iterator pair;
+            pair = vars_local.find(params[1]);
+            if(pair != vars_local.end()){
+                vars_export[pair->first] = pair->second;
+                setenv(pair->first.c_str(), pair->second.c_str(), 1);
+            }
+            else{
+                vars_export[params[1]] = "";
+                setenv(params[1].c_str(), "", 1);
+            }
+        }
+    }
+    else {
+        ERRNO = 1;
+        cerr << "parse error" << endl;
+    }
 }
 
 
@@ -174,13 +200,16 @@ void help() {
 
 string check_var(string arg){
     // there is a fail To Do : fix
-   if(arg.size() > 0 && arg[0] == '$'){
+   if(arg.size() > 1 && arg[0] == '$'){
        map<string, string>::iterator pair;
        pair = vars_local.find(arg.substr(1));
        if(pair != vars_local.end()){
             return pair->second;
        }
-       else{
+       else if(std::getenv(arg.substr(1).c_str())){
+           return string(std::getenv(arg.substr(1).c_str()));
+}
+       else {
            cout<< "Have no variable : "<< arg.substr(1)<< endl;
            return "";
        }
@@ -192,44 +221,31 @@ string check_var(string arg){
 
 void set_var_as_local(const string &var){
     string first = var.substr(0, var.find("="));
-    string second = var.substr( var.find("="));
+    string second = var.substr( var.find("=")+1);
     vars_local[first]=second;
 }
 void set_var_as_export(string var){
     string first = var.substr(0, var.find("="));
-    string second = var.substr( var.find("="));
+    string second = var.substr( var.find("=")+1);
     vars_export[first]=second;
     set_var_as_local(var);
+    setenv(first.c_str(), second.c_str(), 1);
 }
 
 std::vector<std::string> post_process_args(std::vector<std::string> args) {
-    int i = 0;
     std::vector<std::string> res;
-    if (args.size() > 0 && args[0] == "mexport") {
-        if(args.size() > 1) {
-            if((args[1].find("=") != std::string::npos) && (args[1].find("\\=") == std::string::npos)) {
-                // creating and exporting
-                set_var_as_export(args[1]);
-            }
-            else {
-                // export first var
-                vars_export[args[1]];
-            }
-        }
-        else {
-            cout << "parse error" << endl;
-        }
+    if(args.size() > 1 && args[0] == "mexport") {
+        mexport(args);
         return res;
     }
-    for(int i = 1; i<args.size();i++) {
+    for(int i = 0; i<args.size();i++) {
         if((args[i].find("=") != std::string::npos) && (args[i].find("\\=") == std::string::npos)) {
             // making var
             set_var_as_local(args[i]);
         }
         else {
             //To Do : fix
-            string arg = check_var(args[i]);
-            res.push_back(arg);
+            res.push_back(args[i]);
         }
     }
     return res;
@@ -246,7 +262,7 @@ std::vector<std::string> divide_into_argumens(std::string line) {
     bool previous_backslash = false;
     bool var = false; // ira
     for (auto symbol : line) {
-        cout << "C:" << symbol << ":C" << endl;
+//        cout << "C:" << symbol << ":C" << endl;
         if (symbol == '\\') {
             if (previous_backslash) {
                 current_word += "\\";
@@ -349,7 +365,6 @@ std::vector<std::string> divide_into_argumens(std::string line) {
     if (current_word.size() > 0) {
         if (parameters.size() > 0) {
             current_word = check_var(current_word);
-            cout << "I am here:" << current_word << endl;
             for (auto arg : expand_env(current_word)) {
                 parameters.push_back(arg);
             }
@@ -399,16 +414,15 @@ inline bool file_exists (const std::string& name) {
 void process_single_line(string line) {
     vector<string> params;
 
+
     params = divide_into_argumens(line);
-    for (string p:params) {
-        cout << "PC:" << p << ":CP" << endl;
-    }
-    cout << params.size() << endl;
+//    for (string p:params) {
+//        cout << "P:" << p << ":P" << endl;
+//    }
     params = post_process_args(params);
-    for (string p:params) {
-        cout << "P:" << p << ":P" << endl;
-    }
-    cout << params.size() << endl;
+//    for (string p:params) {
+//        cout << "P:" << p << ":P" << endl;
+//    }
 
     if (params.size() == 0) {
         return;
@@ -424,6 +438,8 @@ void process_single_line(string line) {
         merrno(params);
     } else if (params[0] == "mecho") {
         mecho(params);
+//    } else if (params[0] == "mexport") {
+//        mexport(params);
     } else if (params[0] == ".") {
         dot(params);
     } else {
