@@ -18,6 +18,7 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <map>
+#include <sys/stat.h>
 
 
 int ERRNO = 0;
@@ -87,18 +88,36 @@ string get_identifier() {
     return string(sub_buf) + "$ ";
 }
 
+int process_script_file(const string &filename);
+
 void dot(vector<string> params){
     // To DO:  виконати його в поточному інтерпретаторі
+    ERRNO = 0;
+    if (params.size() == 1) {
+        cerr << "No arguments given" << endl;
+        ERRNO = 1;
+        return;
+    }
+    if(process_script_file(params[1]) > 0) {
+        ERRNO = 1;
+    }
 }
+
 
 void mecho(vector<string> args){
     // вивід вмісту змінної
-//    for (auto it = vars_env.begin(); it != vars_env.end(); ++it)
-//    {
-//        if((*it).second == param){cout << (*it).second << endl;}
-//
-//    }
+    ERRNO = 0;
+    int i = 1;
+    while (i < args.size() - 1) {
+        cout << args[i] << " ";
+        i++;
+    }
+    if(args.size() > 1) {
+        cout << args[args.size() - 1];
+    }
+    cout << endl;
 }
+
 
 void mexport(string param){
     // To DO:  додати змінну до блоку змінних середовища дочірнього процесу
@@ -155,21 +174,23 @@ void help() {
 
 string check_var(string arg){
     // there is a fail To Do : fix
-   if(arg.substr(0) == "$"){
+   if(arg.size() > 0 && arg[0] == '$'){
        map<string, string>::iterator pair;
        pair = vars_local.find(arg.substr(1));
        if(pair != vars_local.end()){
-            return pair->second;}
+            return pair->second;
+       }
        else{
            cout<< "Have no variable : "<< arg.substr(1)<< endl;
-           return "";}
+           return "";
+       }
    }
    return arg;
 }
 
 
 
-void set_var_as_local(string var){
+void set_var_as_local(const string &var){
     string first = var.substr(0, var.find("="));
     string second = var.substr( var.find("="));
     vars_local[first]=second;
@@ -207,7 +228,7 @@ std::vector<std::string> post_process_args(std::vector<std::string> args) {
         }
         else {
             //To Do : fix
-            arg = check_var(args[i]);
+            string arg = check_var(args[i]);
             res.push_back(arg);
         }
     }
@@ -225,6 +246,7 @@ std::vector<std::string> divide_into_argumens(std::string line) {
     bool previous_backslash = false;
     bool var = false; // ira
     for (auto symbol : line) {
+        cout << "C:" << symbol << ":C" << endl;
         if (symbol == '\\') {
             if (previous_backslash) {
                 current_word += "\\";
@@ -240,9 +262,7 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                 if (opened_single_quotes) {
                     opened_single_quotes = false;
                     if (current_word.size() > 0) {
-
                         parameters.push_back(current_word);
-
                         current_word = "";
                     }
                 } else {
@@ -328,8 +348,9 @@ std::vector<std::string> divide_into_argumens(std::string line) {
     }
     if (current_word.size() > 0) {
         if (parameters.size() > 0) {
+            current_word = check_var(current_word);
+            cout << "I am here:" << current_word << endl;
             for (auto arg : expand_env(current_word)) {
-                arg = check_var(arg);
                 parameters.push_back(arg);
             }
         } else {
@@ -368,6 +389,64 @@ void create_subprocess(vector<string> params) {
     }
 }
 
+
+inline bool file_exists (const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
+
+
+void process_single_line(string line) {
+    vector<string> params;
+
+    params = divide_into_argumens(line);
+    for (string p:params) {
+        cout << "PC:" << p << ":CP" << endl;
+    }
+    cout << params.size() << endl;
+    params = post_process_args(params);
+    for (string p:params) {
+        cout << "P:" << p << ":P" << endl;
+    }
+    cout << params.size() << endl;
+
+    if (params.size() == 0) {
+        return;
+    } else if (params[0] == "help") {
+        help();
+    } else if (params[0] == "mexit") {
+        mexit(params);
+    } else if (params[0] == "mcd") {
+        mcd(params);
+    } else if (params[0] == "mpwd") {
+        mpwd(params);
+    } else if (params[0] == "merrno") {
+        merrno(params);
+    } else if (params[0] == "mecho") {
+        mecho(params);
+    } else if (params[0] == ".") {
+        dot(params);
+    } else {
+        create_subprocess(params);
+    }
+}
+
+int process_script_file(const string &filename) {
+    ifstream in(filename);
+
+    if(!in) {
+        cerr << "Cannot open file:" << filename << endl;
+        return 1;
+    }
+
+    string str;
+    while(std::getline(in, str)) {
+        process_single_line(str);
+    }
+    in.close();
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     char sub_buf[BUFF_SIZE];
     getcwd(sub_buf, BUFF_SIZE);
@@ -377,6 +456,11 @@ int main(int argc, char *argv[]) {
         string env_p_s = env_p;
         env_p_s = path_to_subprograms + ":" + env_p_s;
         setenv("PATH", env_p_s.c_str(), 1);
+    }
+
+    if (argc > 1) {
+        ERRNO = process_script_file(string(argv[1]));
+        exit(ERRNO);
     }
 
     std::string cur;
@@ -390,10 +474,10 @@ int main(int argc, char *argv[]) {
         cur = string(line);
 
         free(line);
-        vector<string> params;
+        process_single_line(cur);
+        /*vector<string> params;
 
         params = divide_into_argumens(cur);
-        params = post_process_args(params);
 
         if (params.size() == 0) {
             continue;
@@ -408,12 +492,12 @@ int main(int argc, char *argv[]) {
         } else if (params[0] == "merrno") {
             merrno(params);
         } else if (params[0] == "mecho") {
-            mecho(params);
+            mecho(params[1]);
         } else if (params[0] == ".") {
             dot(params);
         } else {
             create_subprocess(params);
-        }
+        }*/
     }
 
     cout << endl << "Bye bye" << endl;
