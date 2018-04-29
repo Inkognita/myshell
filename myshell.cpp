@@ -154,16 +154,31 @@ void help() {
 }
 
 string check_var(string arg){
+    // there is a fail To Do : fix
    if(arg[0] == "$"){
        map<string, string>::iterator pair;
-       pair = m.find(arg.substr(1));
-       if(pair != m.end()){
+       pair = vars_local.find(arg.substr(1));
+       if(pair != vars_local.end()){
             return pair->second;}
        else{
            cout<< "Have no variable : "<< arg.substr(1)<< endl;
            return "";}
    }
    return arg;
+}
+
+
+
+void set_var_as_local(string var){
+    string first = var.substr(0, var.find("="));
+    string second = var.substr( var.find("="));
+    vars_local[first]=second;
+}
+void set_var_as_export(string var){
+    string first = var.substr(0, var.find("="));
+    string second = var.substr( var.find("="));
+    vars_export[first]=second;
+    set_var_as_local(var);
 }
 
 std::vector<std::string> post_process_args(std::vector<std::string> args) {
@@ -173,9 +188,11 @@ std::vector<std::string> post_process_args(std::vector<std::string> args) {
         if(args.size() > 1) {
             if((args[1].find("=") != std::string::npos) && (args[1].find("\\=") == std::string::npos)) {
                 // creating and exporting
+                set_var_as_export(args[1]);
             }
             else {
                 // export first var
+                vars_export[args[1]];
             }
         }
         else {
@@ -183,11 +200,13 @@ std::vector<std::string> post_process_args(std::vector<std::string> args) {
         }
         return res;
     }
-    for(; i<args.size();i++) {
+    for(int i = 1; i<args.size();i++) {
         if((args[i].find("=") != std::string::npos) && (args[i].find("\\=") == std::string::npos)) {
             // making var
+            set_var_as_local(args[i]);
         }
         else {
+            //To Do : fix
             arg = check_var(args[i]);
             res.push_back(arg);
         }
@@ -265,6 +284,7 @@ std::vector<std::string> divide_into_argumens(std::string line) {
                     if (parameters.size() > 0) {
                         current_word = check_var(current_word);
                         for (auto arg : expand_env(current_word)) {
+
                             parameters.push_back(arg);
 
                         }
