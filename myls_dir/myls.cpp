@@ -124,7 +124,6 @@ int main(int argc, char *argv[]) {
                 if (merrno != 0) { return merrno; }
             } else {
                 help();
-
                 return 0;
             }
         } else if (!strcmp(argv[i], "-F")) {
@@ -153,6 +152,7 @@ int main(int argc, char *argv[]) {
             }
 
         } else if (!strcmp(argv[i], "-l")) {
+            L = true;
             if (double_dash) {
                 merrno = is_obj(p);
                 if (merrno != 0) { return merrno; }
@@ -181,22 +181,22 @@ int main(int argc, char *argv[]) {
 
         } else {
 
-            // if contains "-", but not an option - pass
 
-            //checking file or dir
             string stmp{argv[i]};
 
             boost::filesystem::path p{stmp};
 
             paths.push_back(p);
         }
-        if(paths.size()==0){
-            is_obj(curr);
-        }
-        for (size_t i = 0; i < paths.size(); i++) {
-            is_obj(paths[i]);
-        }
-
-        return merrno;
     }
+    if(paths.size()< 1){
+        cout<<"ny"<<endl;
+        is_obj(curr);
+    }
+    for (size_t i = 0; i < paths.size(); i++) {
+        is_obj(paths[i]);
+    }
+
+    return merrno;
+
 }
