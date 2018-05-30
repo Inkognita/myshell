@@ -13,6 +13,7 @@ bool R = false;
 bool r = false;
 bool double_dash = false;
 bool sort_file = false;
+bool not_current = false;
 
 void help() {
     cout<<"myls: usage: myls [path|mask] [-l] [-h|--help] [--sort=U|S|t|X|D|s] [-r]"<<endl;
@@ -55,13 +56,14 @@ int files_ls( boost::filesystem::path file){
 int directory_ls(boost::filesystem::path file){
     //cout<<"fund"<<endl;
     if (R) {
+        //cout<<"pochemu"<<endl;
         boost::filesystem::recursive_directory_iterator end;
 
         for (boost::filesystem::recursive_directory_iterator i(file); i != end; ++i) {
             boost::filesystem::path current_file = i->path();
 
             int merrno=files_ls(current_file);
-            return merrno;
+            if(merrno!=0){ return merrno;}
         }
     }else{
 
@@ -74,7 +76,7 @@ int directory_ls(boost::filesystem::path file){
             boost::filesystem::path current_file = itr->path();
 
             int merrno=files_ls(current_file);
-            return merrno;
+            if(merrno!=0){ return merrno;}
         }
     }
     return 0;
@@ -82,6 +84,7 @@ int directory_ls(boost::filesystem::path file){
 
 int is_obj(boost::filesystem::path p){
     int merrno = 0;
+    not_current = true;
 
 
     if(boost::filesystem::is_directory(p)){
@@ -104,8 +107,8 @@ int main(int argc, char *argv[]) {
 
 
     if (argc==1){
-
-        merrno=directory_ls(".");
+        boost::filesystem::path p{"."};
+        merrno=directory_ls(p);
         if(merrno!=0){ return merrno;}
     }
     //if [-h |--help] - print help and exit with errno 0
@@ -135,6 +138,7 @@ int main(int argc, char *argv[]) {
                 if(merrno!=0){ return merrno;}
             }else{
             // recursive dir listing
+
                 R = true;}
         }else if(!strcmp(argv[i],"--")){
             if(double_dash){
@@ -169,6 +173,7 @@ int main(int argc, char *argv[]) {
                 sort_file= true;}
 
         }else{
+            not_current = true;
             // if contains "-", but not an option - pass
 
             //checking file or dir
