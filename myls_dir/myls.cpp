@@ -21,8 +21,8 @@ void help() {
     cout<<"-l - use a long listing format"<<endl;
     cout<<"-r - reverse order while sorting"<<endl;
     cout<<"--sort=U|S|t|X|D|s - sorting"<<endl;
-
 }
+
 
 int files_ls( boost::filesystem::path file){
     if ( boost::filesystem::exists(file) ){
@@ -30,17 +30,17 @@ int files_ls( boost::filesystem::path file){
         if(L){
             // long listing
             if(boost::filesystem::is_directory(file)){
-                cout << file << "     " << "0" << " "
+                cout << file.filename() << "     " << "0" << " "
                      << boost::filesystem::last_write_time(file) << endl;
             } else {
 
-                cout << file << "     " << boost::filesystem::file_size(file) << " "
+                cout << file.filename() << "     " << boost::filesystem::file_size(file) << " "
                      << boost::filesystem::last_write_time(file) << endl;
             }
             return 0;
         } else{
 
-            cout<<file<<endl;
+            cout<<file.filename()<<endl;
         }
 
     }
@@ -54,27 +54,43 @@ int files_ls( boost::filesystem::path file){
 
 int directory_ls(boost::filesystem::path file){
     //cout<<"fund"<<endl;
+    if (R) {
+        boost::filesystem::recursive_directory_iterator end;
 
-    boost::filesystem::directory_iterator end_itr{};
-    //cout<<"kkk"<<endl;
+        for (boost::filesystem::recursive_directory_iterator i(file); i != end; ++i) {
+            boost::filesystem::path current_file = i->path();
 
-//    cout <<"j"<< file.filename() << endl;
-    cout << "name: " << file.string() << endl;
+            int merrno=files_ls(current_file);
+            return merrno;
+        }
+    }else{
 
-    cout << boost::filesystem::exists(file) << endl;
-    cout << boost::filesystem::is_regular_file(file) << endl;
-    cout << boost::filesystem::is_directory(file) << endl;
+        boost::filesystem::directory_iterator end_itr{};
 
-   // boost::filesystem::recursive_directory_iterator itr(file);
-// ЦІ рядки дають помилку
-   // boost::filesystem::recursive_directory_iterator end_iter;
-    for (auto itr = boost::filesystem::directory_iterator(file); itr != end_itr; ++itr) {
-        cout << itr->path().string() << endl;
-////        cout<<"ppp"<<endl;
-        boost::filesystem::path current_file = itr->path();
-        cout<<current_file<<endl;
-        int merrno=files_ls(current_file);
-        return merrno;
+    // ЦІ рядки дають помилку
+       // boost::filesystem::recursive_directory_iterator end_iter;
+        for (auto itr = boost::filesystem::directory_iterator(file); itr != end_itr; ++itr) {
+
+            boost::filesystem::path current_file = itr->path();
+
+            int merrno=files_ls(current_file);
+            return merrno;
+        }
+    }
+    return 0;
+}
+
+int is_obj(boost::filesystem::path p){
+    int merrno = 0;
+
+
+    if(boost::filesystem::is_directory(p)){
+        merrno=directory_ls(p);
+        if(merrno!=0){ return merrno;}
+    } else{
+
+        merrno=files_ls(p);
+        if(merrno!=0){ return merrno;}
     }
     return 0;
 }
@@ -88,71 +104,80 @@ int main(int argc, char *argv[]) {
 
 
     if (argc==1){
-        cout<<"invalid number of args"<<endl;
 
-        return 1 ;
+        merrno=directory_ls(".");
+        if(merrno!=0){ return merrno;}
     }
     //if [-h |--help] - print help and exit with errno 0
     for(int i =1; i<argc; i++){
+        string stmp{argv[i]};
+
+        boost::filesystem::path p{stmp};
         if(!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help")){
-            help();
-            return 0;
+            if(double_dash){
+                merrno = is_obj(p);
+                if(merrno!=0){ return merrno;}
+            }else {
+                help();
+
+                return 0;
+            }
         } else if(!strcmp(argv[i],"-F")){
+            if(double_dash){
+                merrno = is_obj(p);
+                if(merrno!=0){ return merrno;}
+            }else{
             // крім того, що перед директоріями виводить /, вказує і типи спеціальних файлів
-            f = true;
+                 f = true;}
         } else if(!strcmp(argv[i],"-R")){
+            if(double_dash){
+                merrno = is_obj(p);
+                if(merrno!=0){ return merrno;}
+            }else{
             // recursive dir listing
-            R = true;
+                R = true;}
         }else if(!strcmp(argv[i],"--")){
-            double_dash= true;
+            if(double_dash){
+                merrno = is_obj(p);
+                if(merrno!=0){ return merrno;}
+            }else{
+                double_dash= true;}
 
         } else if(!strcmp(argv[i],"-l")){
+            if(double_dash){
+                merrno = is_obj(p);
+                if(merrno!=0){ return merrno;}
+            }else{
             // long listing
-            L= true;
+                L= true;
+            }
 
         }else if(!strcmp(argv[i],"-r")){
+            if(double_dash){
+                merrno = is_obj(p);
+                if(merrno!=0){ return merrno;}
+            }else{
             // reverse listing
-            r= true;
+                r= true;}
 
         }else if(!strcmp(argv[i],"--sort")){
+            if(double_dash){
+                merrno = is_obj(p);
+                if(merrno!=0){ return merrno;}
+            }else{
             // sorting with param
-            sort_file= true;
+                sort_file= true;}
 
         }else{
             // if contains "-", but not an option - pass
 
             //checking file or dir
             string stmp{argv[i]};
-            cout << "|" << stmp << "|" << endl;
+
             boost::filesystem::path p{stmp};
 
-            //cout << "DFD: " << stmp << endl;
-            //cout<<p.filename().string()<< endl;
-            cout << p.string() << endl;
-            //merrno=files_ls(p);
             if(boost::filesystem::is_directory(p)){
-                try {
-                    boost::filesystem::directory_iterator end_itr{};
-                    for (auto itr = boost::filesystem::directory_iterator(p);
-                                    itr != end_itr; ++itr) {
-                        cout << itr->path().string() << endl;
-                        boost::filesystem::path current_file = itr->path();
-                        cout<<current_file<<endl;
-                        //int merrno=files_ls(current_file);
-                        //return merrno;
-                    }
-//                    merrno = directory_ls(p);
-#if 1
-                }
-                catch(boost::filesystem::filesystem_error& e)
-                {
-                    std::cerr << e.what() << std::endl;
-                    std::cerr << e.code() << std::endl;
-                    std::cerr << e.path1() << std::endl;
-                    std::cerr << e.path2() << std::endl;
-                    throw;
-                }
-#endif
+                merrno=directory_ls(p);
                 if(merrno!=0){ return merrno;}
             } else{
 
