@@ -1,3 +1,0 @@
-/home/inkognita/CLionProjects/myshell/myls_dir/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/inkognita/CLionProjects/myshell/myls_dir/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/inkognita/CLionProjects/myshell/myls_dir/cmake-build-debug/CMakeFiles/myls.dir
