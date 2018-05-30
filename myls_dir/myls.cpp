@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
         }
     }
     if(paths.size()< 1){
-        cout<<"ny"<<endl;
+
         is_obj(curr);
     }
     for (size_t i = 0; i < paths.size(); i++) {
