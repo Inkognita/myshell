@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/ira/CLionProjects/myls/myls.cpp" "/home/ira/CLionProjects/myls/cmake-build-debug/CMakeFiles/myls.dir/myls.cpp.o"
+  "/home/inkognita/CLionProjects/myshell/myls_dir/myls.cpp" "/home/inkognita/CLionProjects/myshell/myls_dir/cmake-build-debug/CMakeFiles/myls.dir/myls.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
