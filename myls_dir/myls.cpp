@@ -13,6 +13,8 @@ bool R = false;
 bool r = false;
 bool double_dash = false;
 bool sort_file = false;
+boost::filesystem::path curr{"."};
+
 
 void help() {
     cout<<"myls: usage: myls [path|mask] [-l] [-h|--help] [--sort=U|S|t|X|D|s] [-r]"<<endl;
@@ -75,18 +77,19 @@ int files_ls( boost::filesystem::path file){
 int directory_ls(boost::filesystem::path file){
     //cout<<"fund"<<endl;
     if (R) {
+        cout<<file<<":"<<endl;
         boost::filesystem::recursive_directory_iterator end;
 
         for (boost::filesystem::recursive_directory_iterator i(file); i != end; ++i) {
             boost::filesystem::path current_file = i->path();
 
             int merrno=files_ls(current_file);
-            return merrno;
+            if(merrno!=0){ return merrno;}
         }
     }else{
 
         boost::filesystem::directory_iterator end_itr{};
-
+        cout<<file<<":"<<endl;
     // ЦІ рядки дають помилку
        // boost::filesystem::recursive_directory_iterator end_iter;
         for (auto itr = boost::filesystem::directory_iterator(file); itr != end_itr; ++itr) {
@@ -94,7 +97,7 @@ int directory_ls(boost::filesystem::path file){
             boost::filesystem::path current_file = itr->path();
 
             int merrno=files_ls(current_file);
-            return merrno;
+            if(merrno!=0){ return merrno;}
         }
     }
     return 0;
@@ -103,6 +106,7 @@ int directory_ls(boost::filesystem::path file){
 int is_obj(boost::filesystem::path p){
     int merrno = 0;
     cout<<"ebat"<<endl;
+
 
     if(boost::filesystem::is_directory(p)){
         merrno=directory_ls(p);
@@ -129,82 +133,103 @@ int listing(vector<boost::filesystem::path> &files){
 
 int main(int argc, char *argv[]) {
 
-
+    vector<boost::filesystem::path> paths;
     string cur;
     int merrno = 0;
 
     vector<boost::filesystem::path> files;
 
 
-    if (argc==1){
+    if (argc == 1) {
 
-        merrno=directory_ls(".");
-        if(merrno!=0){ return merrno;}
+
+        merrno = directory_ls(curr);
+        if (merrno != 0) { return merrno; }
     }
     //if [-h |--help] - print help and exit with errno 0
-    for(int i =1; i<argc; i++){
+    for (int i = 1; i < argc; i++) {
         string stmp{argv[i]};
 
         boost::filesystem::path p{stmp};
-        if(!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help")){
-            if(double_dash){
-                files.emplace_back(p);
-            }else {
+        if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
+            if (double_dash) {
+                merrno = is_obj(p);
+                if (merrno != 0) { return merrno; }
+            } else {
                 help();
-
                 return 0;
             }
-        } else if(!strcmp(argv[i],"-F")){
-            if(double_dash){
-                files.emplace_back(p);
-            }else{
-            // крім того, що перед директоріями виводить /, вказує і типи спеціальних файлів
-                 f = true;}
-        } else if(!strcmp(argv[i],"-R")){
-            if(double_dash){
-                files.emplace_back(p);
-            }else{
-            // recursive dir listing
-                R = true;}
-        }else if(!strcmp(argv[i],"--")){
-            if(double_dash){
-                files.emplace_back(p);
-            }else{
-                double_dash= true;}
+        } else if (!strcmp(argv[i], "-F")) {
+            if (double_dash) {
+                merrno = is_obj(p);
+                if (merrno != 0) { return merrno; }
+            } else {
+                // крім того, що перед директоріями виводить /, вказує і типи спеціальних файлів
+                f = true;
+            }
+        } else if (!strcmp(argv[i], "-R")) {
+            if (double_dash) {
+                merrno = is_obj(p);
+                if (merrno != 0) { return merrno; }
+            } else {
+                // recursive dir listing
 
-        } else if(!strcmp(argv[i],"-l")){
-            if(double_dash){
-                files.emplace_back(p);
-            }else{
-            // long listing
-                L= true;
+                R = true;
+            }
+        } else if (!strcmp(argv[i], "--")) {
+            if (double_dash) {
+                merrno = is_obj(p);
+                if (merrno != 0) { return merrno; }
+            } else {
+                double_dash = true;
             }
 
-        }else if(!strcmp(argv[i],"-r")){
-            if(double_dash){
-                files.emplace_back(p);
-            }else{
-            // reverse listing
-                r= true;}
+        } else if (!strcmp(argv[i], "-l")) {
+            L = true;
+            if (double_dash) {
+                merrno = is_obj(p);
+                if (merrno != 0) { return merrno; }
+            } else {
+                // long listing
+                L = true;
+            }
 
-        }else if(!strcmp(argv[i],"--sort")){
-            if(double_dash){
-                files.emplace_back(p);
-            }else{
-            // sorting with param
-                sort_file= true;}
+        } else if (!strcmp(argv[i], "-r")) {
+            if (double_dash) {
+                merrno = is_obj(p);
+                if (merrno != 0) { return merrno; }
+            } else {
+                // reverse listing
+                r = true;
+            }
 
-        }else{
-            files.emplace_back(p);
+        } else if (!strcmp(argv[i], "--sort")) {
+            if (double_dash) {
+                merrno = is_obj(p);
+                if (merrno != 0) { return merrno; }
+            } else {
+                // sorting with param
+                sort_file = true;
+            }
+
+        } else {
+
+
+            string stmp{argv[i]};
+
+            boost::filesystem::path p{stmp};
+
+            paths.push_back(p);
         }
     }
-    cout<<"ebis veselis"<<endl;
-    merrno=listing(files);
-    if(merrno!=0){ return merrno;}
+    if(paths.size()< 1){
 
-
-
-
+        is_obj(curr);
+    }
+    for (size_t i = 0; i < paths.size(); i++) {
+        is_obj(paths[i]);
+    }
 
     return merrno;
+
 }

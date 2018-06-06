@@ -1,8 +1,0 @@
-/home/ira/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/173.4548.31/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/ira/CLionProjects/myls
--- Boost version: 1.58.0
--- Found the following Boost libraries:
---   filesystem
---   system
--- Configuring done
--- Generating done
--- Build files have been written to: /home/ira/CLionProjects/myls/cmake-build-debug

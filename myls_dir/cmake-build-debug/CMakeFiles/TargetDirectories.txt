@@ -1,3 +1,0 @@
-/home/ira/CLionProjects/myls/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/ira/CLionProjects/myls/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/ira/CLionProjects/myls/cmake-build-debug/CMakeFiles/myls.dir
