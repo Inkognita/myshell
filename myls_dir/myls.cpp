@@ -23,6 +23,26 @@ void help() {
     cout<<"--sort=U|S|t|X|D|s - sorting"<<endl;
 }
 
+bool sort_t(boost::filesystem::path file, boost::filesystem::path file2){
+
+
+    return(boost::filesystem::last_write_time(file)<boost::filesystem::last_write_time(file2));
+}
+
+bool sort_s(boost::filesystem::path file, boost::filesystem::path file2){
+
+
+}
+
+bool sort_n(boost::filesystem::path file, boost::filesystem::path file2){
+    return (file.filename()<file2.filename());
+}
+
+bool sort_x(boost::filesystem::path file, boost::filesystem::path file2){
+    return (boost::filesystem::extension(file)< boost::filesystem::extension(file2));
+}
+
+
 
 int files_ls( boost::filesystem::path file){
     if ( boost::filesystem::exists(file) ){
@@ -82,25 +102,38 @@ int directory_ls(boost::filesystem::path file){
 
 int is_obj(boost::filesystem::path p){
     int merrno = 0;
-
+    cout<<"ebat"<<endl;
 
     if(boost::filesystem::is_directory(p)){
         merrno=directory_ls(p);
         if(merrno!=0){ return merrno;}
     } else{
-
+        cout<<"ebat kolo"<<endl;
         merrno=files_ls(p);
         if(merrno!=0){ return merrno;}
     }
     return 0;
 }
 
+int listing(vector<boost::filesystem::path> &files){
+    int merrno = 0;
+    cout<<"ebat kopat"<<endl;
+    for(auto file : files){
+        cout<<"typo klasnyi kod"<<endl;
+        merrno=is_obj(file);
+        if(merrno!=0){ return merrno;}
+    }
+
+    return 0;
+}
 
 int main(int argc, char *argv[]) {
 
 
     string cur;
     int merrno = 0;
+
+    vector<boost::filesystem::path> files;
 
 
     if (argc==1){
@@ -115,8 +148,7 @@ int main(int argc, char *argv[]) {
         boost::filesystem::path p{stmp};
         if(!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help")){
             if(double_dash){
-                merrno = is_obj(p);
-                if(merrno!=0){ return merrno;}
+                files.emplace_back(p);
             }else {
                 help();
 
@@ -124,29 +156,25 @@ int main(int argc, char *argv[]) {
             }
         } else if(!strcmp(argv[i],"-F")){
             if(double_dash){
-                merrno = is_obj(p);
-                if(merrno!=0){ return merrno;}
+                files.emplace_back(p);
             }else{
             // крім того, що перед директоріями виводить /, вказує і типи спеціальних файлів
                  f = true;}
         } else if(!strcmp(argv[i],"-R")){
             if(double_dash){
-                merrno = is_obj(p);
-                if(merrno!=0){ return merrno;}
+                files.emplace_back(p);
             }else{
             // recursive dir listing
                 R = true;}
         }else if(!strcmp(argv[i],"--")){
             if(double_dash){
-                merrno = is_obj(p);
-                if(merrno!=0){ return merrno;}
+                files.emplace_back(p);
             }else{
                 double_dash= true;}
 
         } else if(!strcmp(argv[i],"-l")){
             if(double_dash){
-                merrno = is_obj(p);
-                if(merrno!=0){ return merrno;}
+                files.emplace_back(p);
             }else{
             // long listing
                 L= true;
@@ -154,38 +182,25 @@ int main(int argc, char *argv[]) {
 
         }else if(!strcmp(argv[i],"-r")){
             if(double_dash){
-                merrno = is_obj(p);
-                if(merrno!=0){ return merrno;}
+                files.emplace_back(p);
             }else{
             // reverse listing
                 r= true;}
 
         }else if(!strcmp(argv[i],"--sort")){
             if(double_dash){
-                merrno = is_obj(p);
-                if(merrno!=0){ return merrno;}
+                files.emplace_back(p);
             }else{
             // sorting with param
                 sort_file= true;}
 
         }else{
-            // if contains "-", but not an option - pass
-
-            //checking file or dir
-            string stmp{argv[i]};
-
-            boost::filesystem::path p{stmp};
-
-            if(boost::filesystem::is_directory(p)){
-                merrno=directory_ls(p);
-                if(merrno!=0){ return merrno;}
-            } else{
-
-                merrno=files_ls(p);
-                if(merrno!=0){ return merrno;}
-            }
+            files.emplace_back(p);
         }
     }
+    cout<<"ebis veselis"<<endl;
+    merrno=listing(files);
+    if(merrno!=0){ return merrno;}
 
 
 
