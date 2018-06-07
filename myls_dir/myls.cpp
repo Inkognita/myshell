@@ -35,12 +35,27 @@ void help() {
 }
 
 bool sort_t(boost::filesystem::path file, boost::filesystem::path file2){
-
+    if(D){
+        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+            return false;
+        }
+        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+            return true;
+        }
+    }
 
     return(boost::filesystem::last_write_time(file)<boost::filesystem::last_write_time(file2));
 }
 
 bool sort_s(boost::filesystem::path file, boost::filesystem::path file2){
+    if(D){
+        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+            return false;
+        }
+        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+            return true;
+        }
+    }
     int size1 = 0;
     int size2 = 0;
 
@@ -50,14 +65,31 @@ bool sort_s(boost::filesystem::path file, boost::filesystem::path file2){
     if(!boost::filesystem::is_directory(file2)){
         size2=(int) boost::filesystem::file_size(file2);
     }
+
     return (size1<size2);
 }
 
 bool sort_n(boost::filesystem::path file, boost::filesystem::path file2){
+    if(D){
+        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+            return false;
+        }
+        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+            return true;
+        }
+    }
     return (file.filename().string()<file2.filename().string());
 }
 
 bool sort_x(boost::filesystem::path file, boost::filesystem::path file2){
+    if(D){
+        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+            return false;
+        }
+        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+            return true;
+        }
+    }
     return (boost::filesystem::extension(file)< boost::filesystem::extension(file2));
 }
 void sort_files_by(vector<boost::filesystem::path> &paths){
@@ -149,7 +181,7 @@ void special_ls(boost::filesystem::path file ){
     cout << s;
     cout<< file.filename().string();
     if(L) {
-        cout << "     " << size << " "
+        cout << "       " << size << "   "
              << ctime(&t);
     } else{cout<<endl;}
 
