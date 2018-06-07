@@ -93,7 +93,8 @@ bool sort_x(boost::filesystem::path file, boost::filesystem::path file2){
     return (boost::filesystem::extension(file)< boost::filesystem::extension(file2));
 }
 void sort_files_by(vector<boost::filesystem::path> &paths){
-    if(S){
+    if(U){N= false;}
+    else if(S){
         sort(paths.begin(), paths.end(), sort_s);
     } else if(t){
         sort(paths.begin(), paths.end(), sort_t);
@@ -370,7 +371,7 @@ int main(int argc, char *argv[]) {
             if (double_dash) {
                 paths.push_back(p);
             } else {
-                // sorting with param
+
                 N = true;
             }
 
@@ -378,7 +379,6 @@ int main(int argc, char *argv[]) {
             if (double_dash) {
                 paths.push_back(p);
             } else {
-                // sorting with param
                 U = true;
             }
 
@@ -386,7 +386,7 @@ int main(int argc, char *argv[]) {
             if (double_dash) {
                 paths.push_back(p);
             } else {
-                // sorting with param
+                // ToDo : special files goes separate
                 s = true;
             }
 
