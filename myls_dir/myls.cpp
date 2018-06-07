@@ -16,7 +16,7 @@ bool S = false;
 bool U = false;
 bool t = false;
 bool X = false;
-bool N = false;
+bool N = true;
 bool s = false;
 bool double_dash = false;
 bool sort_file = false;
@@ -57,6 +57,18 @@ bool sort_n(boost::filesystem::path file, boost::filesystem::path file2){
 bool sort_x(boost::filesystem::path file, boost::filesystem::path file2){
     return (boost::filesystem::extension(file)< boost::filesystem::extension(file2));
 }
+void sort_files_by(vector<boost::filesystem::path> &paths){
+    if(S){
+        sort(paths.begin(), paths.end(), sort_s);
+    } else if(t){
+        sort(paths.begin(), paths.end(), sort_t);
+
+    }else if(N){
+        sort(paths.begin(), paths.end(), sort_n);
+
+    }else if(X) {
+        sort(paths.begin(), paths.end(), sort_x);
+    }}
 
 void special_ls(boost::filesystem::path file ){
     time_t t = boost::filesystem::last_write_time(file);
@@ -82,7 +94,7 @@ void special_ls(boost::filesystem::path file ){
     if(L) {
         cout << "     " << size << " "
              << ctime(&t);
-    }
+    } else{cout<<endl;}
 
 }
 
@@ -95,12 +107,13 @@ int files_ls( boost::filesystem::path file){
 
     else{
         std::cout << "Can't find this file!" << std::endl;
-        return 1;
+
     }
     return 0;
 }
 
 int directory_ls(boost::filesystem::path file){
+    vector<boost::filesystem::path> files;
     //cout<<"fund"<<endl;
     if (R) {
         cout<<file.filename().string()<<":"<<endl;
@@ -109,8 +122,7 @@ int directory_ls(boost::filesystem::path file){
         for (boost::filesystem::recursive_directory_iterator i(file); i != end; ++i) {
             boost::filesystem::path current_file = i->path();
 
-            int merrno=files_ls(current_file);
-            if(merrno!=0){ return merrno;}
+            files.push_back(current_file);
         }
     }else{
 
@@ -121,10 +133,19 @@ int directory_ls(boost::filesystem::path file){
 
             boost::filesystem::path current_file = itr->path();
 
-            int merrno=files_ls(current_file);
-            if(merrno!=0){ return merrno;}
+            files.push_back(current_file);
         }
     }
+
+    if(sort_file){
+        sort_files_by(files);
+
+    }
+
+    for(auto file : files){
+        files_ls(file);
+    }
+
     return 0;
 }
 
@@ -142,29 +163,15 @@ int is_obj(boost::filesystem::path p){
     return 0;
 }
 
-void sort_files_by(vector<boost::filesystem::path> &paths){
-    if(S){
-        sort(paths.begin(), paths.end(), sort_s);
-    } else if(t){
-        sort(paths.begin(), paths.end(), sort_t);
-    } else if(N){
-        sort(paths.begin(), paths.end(), sort_n);
-    } else if(X) {
-        sort(paths.begin(), paths.end(), sort_x);
-    }
 
-}
 
 int listing(vector<boost::filesystem::path> &paths){
     int merrno = 0;
 
-    if(sort_file){
-        sort_files_by(paths);
-
-    }
 
     for (auto path : paths) {
         merrno = is_obj(path);
+        if(merrno!=0){ return merrno;}
     }
 
     return merrno;
@@ -300,7 +307,7 @@ int main(int argc, char *argv[]) {
     }
     if(paths.size()< 1){
 
-        is_obj(curr);
+        paths.push_back(curr);
     }
     merrno = listing(paths);
 
