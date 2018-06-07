@@ -4,10 +4,13 @@
 #include <unistd.h>
 #include <boost/filesystem.hpp>
 #include <ctime>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 
 using namespace std;
+bool D = false;
 bool L = false;
 bool f = false;
 bool R = false;
@@ -70,19 +73,73 @@ void sort_files_by(vector<boost::filesystem::path> &paths){
         sort(paths.begin(), paths.end(), sort_x);
     }}
 
+bool is_executable(const char *file)
+{
+    struct stat  st;
+
+
+    if ((st.st_mode & S_IEXEC) != 0)
+        return true;
+    return false;
+}
+
+bool is_socket(const char *file)
+{
+    struct stat  st;
+    stat(file, &st);
+
+    if (S_ISSOCK(st.st_mode) == 0) {
+        return true;
+    }
+    return false;
+}
+
+bool is_pipe(const char *file)
+{
+    struct stat  st;
+    stat(file, &st);
+
+    if (S_ISFIFO(st.st_mode) == 0) {
+        return true;
+    }
+    return false;
+}
+
+
+bool is_symlink(const char *file)
+{
+    struct stat  st;
+    stat(file, &st);
+
+    if (S_ISLNK(st.st_mode) == 0) {
+        return true;
+    }
+    return false;
+}
+
+
 void special_ls(boost::filesystem::path file ){
     time_t t = boost::filesystem::last_write_time(file);
     int size = 0;
     string s = "";
-    if(boost::filesystem::is_symlink(file)){
-        s = "@";
-    }
-    else if(boost::filesystem::is_directory(file)){
+    if(boost::filesystem::is_directory(file)){
         s = "/";
+    }else if(is_executable(file.filename().string().c_str())){
+        s = "*";
     }
-    else if(!boost::filesystem::is_directory(file)){
-        s = "";
+    else if(is_socket(file.filename().string().c_str())){
+        s = "=";
     }
+    else if(is_pipe(file.filename().string().c_str())){
+        s = "|";
+    }
+    else if(is_symlink(file.filename().string().c_str())){
+        s = "@";
+    }else if(!boost::filesystem::is_regular_file(file)){
+        s = "?";
+    }
+
+
 
     if(boost::filesystem::is_regular_file(file)){
         size=(int) boost::filesystem::file_size(file);
@@ -220,7 +277,15 @@ int main(int argc, char *argv[]) {
                 double_dash = true;
             }
 
-        } else if (!strcmp(argv[i], "-l")) {
+        }else if (!strcmp(argv[i], "-D")) {
+            if (double_dash) {
+                paths.push_back(p);
+            } else {
+                D = true;
+            }
+
+        }
+        else if (!strcmp(argv[i], "-l")) {
             L = true;
             if (double_dash) {
                 paths.push_back(p);
@@ -301,6 +366,7 @@ int main(int argc, char *argv[]) {
             string stmp{argv[i]};
 
             boost::filesystem::path p{stmp};
+
 
             paths.push_back(p);
         }
