@@ -3,6 +3,7 @@
 #include <vector>
 #include <unistd.h>
 #include <boost/filesystem.hpp>
+#include <ctime>
 
 
 
@@ -11,10 +12,15 @@ bool L = false;
 bool f = false;
 bool R = false;
 bool r = false;
+bool S = false;
+bool U = false;
+bool t = false;
+bool X = false;
+bool N = false;
+bool s = false;
 bool double_dash = false;
 bool sort_file = false;
 boost::filesystem::path curr{"."};
-
 
 void help() {
     cout<<"myls: usage: myls [path|mask] [-l] [-h|--help] [--sort=U|S|t|X|D|s] [-r]"<<endl;
@@ -32,39 +38,59 @@ bool sort_t(boost::filesystem::path file, boost::filesystem::path file2){
 }
 
 bool sort_s(boost::filesystem::path file, boost::filesystem::path file2){
+    int size1 = 0;
+    int size2 = 0;
 
-
+    if(!boost::filesystem::is_directory(file)){
+      size1=(int) boost::filesystem::file_size(file);
+    }
+    if(!boost::filesystem::is_directory(file2)){
+        size2=(int) boost::filesystem::file_size(file2);
+    }
+    return (size1<size2);
 }
 
 bool sort_n(boost::filesystem::path file, boost::filesystem::path file2){
-    return (file.filename()<file2.filename());
+    return (file.filename().string()<file2.filename().string());
 }
 
 bool sort_x(boost::filesystem::path file, boost::filesystem::path file2){
     return (boost::filesystem::extension(file)< boost::filesystem::extension(file2));
 }
 
+void special_ls(boost::filesystem::path file ){
+    time_t t = boost::filesystem::last_write_time(file);
+    int size = 0;
+    string s = "";
+    if(boost::filesystem::is_symlink(file)){
+        s = "@";
+    }
+    else if(boost::filesystem::is_directory(file)){
+        s = "/";
+    }
+    else if(!boost::filesystem::is_directory(file)){
+        s = "";
+    }
+
+    if(boost::filesystem::is_regular_file(file)){
+        size=(int) boost::filesystem::file_size(file);
+
+    }
+
+    cout << s;
+    cout<< file.filename().string();
+    if(L) {
+        cout << "     " << size << " "
+             << ctime(&t);
+    }
+
+}
 
 
 int files_ls( boost::filesystem::path file){
     if ( boost::filesystem::exists(file) ){
 
-        if(L){
-            // long listing
-            if(boost::filesystem::is_directory(file)){
-                cout << file.filename() << "     " << "0" << " "
-                     << boost::filesystem::last_write_time(file) << endl;
-            } else {
-
-                cout << file.filename() << "     " << boost::filesystem::file_size(file) << " "
-                     << boost::filesystem::last_write_time(file) << endl;
-            }
-            return 0;
-        } else{
-
-            cout<<file.filename()<<endl;
-        }
-
+        special_ls(file);
     }
 
     else{
@@ -77,7 +103,7 @@ int files_ls( boost::filesystem::path file){
 int directory_ls(boost::filesystem::path file){
     //cout<<"fund"<<endl;
     if (R) {
-        cout<<file<<":"<<endl;
+        cout<<file.filename().string()<<":"<<endl;
         boost::filesystem::recursive_directory_iterator end;
 
         for (boost::filesystem::recursive_directory_iterator i(file); i != end; ++i) {
@@ -89,9 +115,8 @@ int directory_ls(boost::filesystem::path file){
     }else{
 
         boost::filesystem::directory_iterator end_itr{};
-        cout<<file<<":"<<endl;
-    // ЦІ рядки дають помилку
-       // boost::filesystem::recursive_directory_iterator end_iter;
+        cout<<file.filename().string()<<":"<<endl;
+
         for (auto itr = boost::filesystem::directory_iterator(file); itr != end_itr; ++itr) {
 
             boost::filesystem::path current_file = itr->path();
@@ -105,30 +130,45 @@ int directory_ls(boost::filesystem::path file){
 
 int is_obj(boost::filesystem::path p){
     int merrno = 0;
-    cout<<"ebat"<<endl;
-
 
     if(boost::filesystem::is_directory(p)){
         merrno=directory_ls(p);
         if(merrno!=0){ return merrno;}
     } else{
-        cout<<"ebat kolo"<<endl;
+
         merrno=files_ls(p);
         if(merrno!=0){ return merrno;}
     }
     return 0;
 }
 
-int listing(vector<boost::filesystem::path> &files){
-    int merrno = 0;
-    cout<<"ebat kopat"<<endl;
-    for(auto file : files){
-        cout<<"typo klasnyi kod"<<endl;
-        merrno=is_obj(file);
-        if(merrno!=0){ return merrno;}
+void sort_files_by(vector<boost::filesystem::path> &paths){
+    if(S){
+        sort(paths.begin(), paths.end(), sort_s);
+    } else if(t){
+        sort(paths.begin(), paths.end(), sort_t);
+    } else if(N){
+        sort(paths.begin(), paths.end(), sort_n);
+    } else if(X) {
+        sort(paths.begin(), paths.end(), sort_x);
     }
 
-    return 0;
+}
+
+int listing(vector<boost::filesystem::path> &paths){
+    int merrno = 0;
+
+    if(sort_file){
+        sort_files_by(paths);
+
+    }
+
+    for (auto path : paths) {
+        merrno = is_obj(path);
+    }
+
+    return merrno;
+
 }
 
 int main(int argc, char *argv[]) {
@@ -139,13 +179,6 @@ int main(int argc, char *argv[]) {
 
     vector<boost::filesystem::path> files;
 
-
-    if (argc == 1) {
-
-
-        merrno = directory_ls(curr);
-        if (merrno != 0) { return merrno; }
-    }
     //if [-h |--help] - print help and exit with errno 0
     for (int i = 1; i < argc; i++) {
         string stmp{argv[i]};
@@ -153,24 +186,21 @@ int main(int argc, char *argv[]) {
         boost::filesystem::path p{stmp};
         if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
             if (double_dash) {
-                merrno = is_obj(p);
-                if (merrno != 0) { return merrno; }
+                paths.push_back(p);
             } else {
                 help();
                 return 0;
             }
         } else if (!strcmp(argv[i], "-F")) {
             if (double_dash) {
-                merrno = is_obj(p);
-                if (merrno != 0) { return merrno; }
+                paths.push_back(p);
             } else {
                 // крім того, що перед директоріями виводить /, вказує і типи спеціальних файлів
                 f = true;
             }
         } else if (!strcmp(argv[i], "-R")) {
             if (double_dash) {
-                merrno = is_obj(p);
-                if (merrno != 0) { return merrno; }
+                paths.push_back(p);
             } else {
                 // recursive dir listing
 
@@ -178,8 +208,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (!strcmp(argv[i], "--")) {
             if (double_dash) {
-                merrno = is_obj(p);
-                if (merrno != 0) { return merrno; }
+                paths.push_back(p);
             } else {
                 double_dash = true;
             }
@@ -187,8 +216,7 @@ int main(int argc, char *argv[]) {
         } else if (!strcmp(argv[i], "-l")) {
             L = true;
             if (double_dash) {
-                merrno = is_obj(p);
-                if (merrno != 0) { return merrno; }
+                paths.push_back(p);
             } else {
                 // long listing
                 L = true;
@@ -196,8 +224,7 @@ int main(int argc, char *argv[]) {
 
         } else if (!strcmp(argv[i], "-r")) {
             if (double_dash) {
-                merrno = is_obj(p);
-                if (merrno != 0) { return merrno; }
+                paths.push_back(p);
             } else {
                 // reverse listing
                 r = true;
@@ -205,14 +232,63 @@ int main(int argc, char *argv[]) {
 
         } else if (!strcmp(argv[i], "--sort")) {
             if (double_dash) {
-                merrno = is_obj(p);
-                if (merrno != 0) { return merrno; }
+                paths.push_back(p);
             } else {
                 // sorting with param
                 sort_file = true;
             }
 
-        } else {
+        }else if (!strcmp(argv[i], "-S")) {
+            if (double_dash) {
+                paths.push_back(p);
+            } else {
+                // sorting with param
+                S = true;
+            }
+
+        }else if (!strcmp(argv[i], "-X")) {
+            if (double_dash) {
+                paths.push_back(p);
+            } else {
+                // sorting with param
+                X = true;
+            }
+
+        }else if (!strcmp(argv[i], "-t")) {
+            if (double_dash) {
+                paths.push_back(p);
+            } else {
+                // sorting with param
+                t = true;
+            }
+
+        }else if (!strcmp(argv[i], "-N")) {
+            if (double_dash) {
+                paths.push_back(p);
+            } else {
+                // sorting with param
+                N = true;
+            }
+
+        }else if (!strcmp(argv[i], "-U")) {
+            if (double_dash) {
+                paths.push_back(p);
+            } else {
+                // sorting with param
+                U = true;
+            }
+
+        }else if (!strcmp(argv[i], "-s")) {
+            if (double_dash) {
+                paths.push_back(p);
+            } else {
+                // sorting with param
+                s = true;
+            }
+
+
+        }
+        else {
 
 
             string stmp{argv[i]};
@@ -226,9 +302,7 @@ int main(int argc, char *argv[]) {
 
         is_obj(curr);
     }
-    for (size_t i = 0; i < paths.size(); i++) {
-        is_obj(paths[i]);
-    }
+    merrno = listing(paths);
 
     return merrno;
 
