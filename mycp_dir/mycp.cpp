@@ -66,6 +66,8 @@ int main(int argc, char *argv[]) {
                 fs::copy_file(words[0], words[1], fs::copy_options::overwrite_existing);
             }else if (answ== 3){
                 forced = true;
+            }else if (answ== 2){
+                return 0;
             }
         } else {
             fs::copy_file(words[0], words[1]);
@@ -91,6 +93,8 @@ int main(int argc, char *argv[]) {
                                          fs::copy_options::overwrite_existing | fs::copy_options::recursive);
                             }else if (answ== 3){
                                 forced = true;
+                            }else if (answ== 2){
+                                return 0;
                             }
                         } else {
                             fs::copy(words[i], path_to_create, fs::copy_options::recursive);
@@ -107,6 +111,8 @@ int main(int argc, char *argv[]) {
                             fs::copy_file(words[i], path_to_create, fs::copy_options::overwrite_existing);
                         }else if (answ== 3){
                             forced = true;
+                        }else if (answ== 2){
+                            return 0;
                         }
                     } else {
                         fs::copy_file(words[i], path_to_create);
