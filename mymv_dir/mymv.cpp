@@ -56,12 +56,12 @@ int main(int argc, char *argv[]) {
 
     if (words.size() == 2 && fs::is_regular_file(words[0]) && !fs::is_directory(words[1])) {
         if (fs::exists(words[1])) {
-            int answ = get_user_answer("Overwrite the file " + words[1])
+            int answ = get_user_answer("Overwrite the file " + words[1]);
             if (forced || answ == 1) {
                 fs::copy_file(words[0], words[1], fs::copy_options::overwrite_existing);
                 fs::remove(fs::path(words[0]));
             } else if (answ== 3){
-                f = true;
+                forced = true;
             }
         } else {
             fs::copy_file(words[0], words[1]);
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
                                      fs::copy_options::overwrite_existing | fs::copy_options::recursive);
                             fs::remove_all(fs::path(words[i]));
                         }else if (answ== 3){
-                            f = true;
+                            forced = true;
                         }
                     } else {
                         fs::copy(words[i], path_to_create, fs::copy_options::recursive);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
                             fs::copy_file(words[i], path_to_create, fs::copy_options::overwrite_existing);
                             fs::remove(fs::path(words[i]));
                         }else if (answ== 3){
-                            f = true;
+                            forced = true;
                         }
                     } else {
                         fs::copy_file(words[i], path_to_create);
