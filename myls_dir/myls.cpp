@@ -23,7 +23,8 @@ bool N = true;
 bool s = false;
 bool double_dash = false;
 bool sort_file = false;
-boost::filesystem::path curr{"."};
+namespace fs = boost::filesystem;
+fs::path curr{"."};
 
 void help() {
     cout<<"myls: usage: myls [path|mask] [-l] [-h|--help] [--sort=U|S|t|X|D|s] [-r]"<<endl;
@@ -34,65 +35,65 @@ void help() {
     cout<<"--sort=U|S|t|X|D|s - sorting"<<endl;
 }
 
-bool sort_t(boost::filesystem::path file, boost::filesystem::path file2){
+bool sort_t(fs::path file, fs::path file2){
     if(D){
-        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+        if(fs::is_regular_file(file) && fs::is_directory(file2)){
             return false;
         }
-        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+        else if(fs::is_regular_file(file2) && fs::is_directory(file)){
             return true;
         }
     }
 
-    return(boost::filesystem::last_write_time(file)<boost::filesystem::last_write_time(file2));
+    return(fs::last_write_time(file)<fs::last_write_time(file2));
 }
 
-bool sort_s(boost::filesystem::path file, boost::filesystem::path file2){
+bool sort_s(fs::path file, fs::path file2){
     if(D){
-        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+        if(fs::is_regular_file(file) && fs::is_directory(file2)){
             return false;
         }
-        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+        else if(fs::is_regular_file(file2) && fs::is_directory(file)){
             return true;
         }
     }
     int size1 = 0;
     int size2 = 0;
 
-    if(!boost::filesystem::is_directory(file)){
-      size1=(int) boost::filesystem::file_size(file);
+    if(!fs::is_directory(file)){
+      size1=(int) fs::file_size(file);
     }
-    if(!boost::filesystem::is_directory(file2)){
-        size2=(int) boost::filesystem::file_size(file2);
+    if(!fs::is_directory(file2)){
+        size2=(int) fs::file_size(file2);
     }
 
     return (size1<size2);
 }
 
-bool sort_n(boost::filesystem::path file, boost::filesystem::path file2){
+bool sort_n(fs::path file, fs::path file2){
     if(D){
-        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+        if(fs::is_regular_file(file) && fs::is_directory(file2)){
             return false;
         }
-        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+        else if(fs::is_regular_file(file2) && fs::is_directory(file)){
             return true;
         }
     }
     return (file.filename().string()<file2.filename().string());
 }
 
-bool sort_x(boost::filesystem::path file, boost::filesystem::path file2){
+bool sort_x(fs::path file, fs::path file2){
     if(D){
-        if(boost::filesystem::is_regular_file(file) && boost::filesystem::is_directory(file2)){
+        if(fs::is_regular_file(file) && fs::is_directory(file2)){
             return false;
         }
-        else if(boost::filesystem::is_regular_file(file2) && boost::filesystem::is_directory(file)){
+        else if(fs::is_regular_file(file2) && fs::is_directory(file)){
             return true;
         }
     }
-    return (boost::filesystem::extension(file)< boost::filesystem::extension(file2));
+    return (fs::extension(file)< fs::extension(file2));
 }
-void sort_files_by(vector<boost::filesystem::path> &paths){
+void sort_files_by(vector<fs::path> &paths){
     if(U){N= false;}
     else if(S){
         sort(paths.begin(), paths.end(), sort_s);
@@ -151,11 +152,11 @@ bool is_symlink(const char *file)
 }
 
 
-void special_ls(boost::filesystem::path file ){
-    time_t t = boost::filesystem::last_write_time(file);
+void special_ls(fs::path file ){
+    time_t t = fs::last_write_time(file);
     int size = 0;
     string s = "";
-    if(boost::filesystem::is_directory(file)){
+    if(fs::is_directory(file)){
         s = "/";
     }else if(is_executable(file.filename().string().c_str())){
         s = "*";
@@ -168,14 +169,14 @@ void special_ls(boost::filesystem::path file ){
     }
     else if(is_symlink(file.filename().string().c_str())){
         s = "@";
-    }else if(!boost::filesystem::is_regular_file(file)){
+    }else if(!fs::is_regular_file(file)){
         s = "?";
     }
 
 
 
-    if(boost::filesystem::is_regular_file(file)){
-        size=(int) boost::filesystem::file_size(file);
+    if(fs::is_regular_file(file)){
+        size=(int) fs::file_size(file);
 
     }
 
@@ -189,8 +190,8 @@ void special_ls(boost::filesystem::path file ){
 }
 
 
-int files_ls( boost::filesystem::path file){
-    if ( boost::filesystem::exists(file) ){
+int files_ls( fs::path file){
+    if ( fs::exists(file) ){
 
         special_ls(file);
     }
@@ -202,26 +203,26 @@ int files_ls( boost::filesystem::path file){
     return 0;
 }
 
-int directory_ls(boost::filesystem::path file){
-    vector<boost::filesystem::path> files;
+int directory_ls(fs::path file){
+    vector<fs::path> files;
     //cout<<"fund"<<endl;
     if (R) {
         cout<<file.filename().string()<<":"<<endl;
-        boost::filesystem::recursive_directory_iterator end;
+        fs::recursive_directory_iterator end;
 
-        for (boost::filesystem::recursive_directory_iterator i(file); i != end; ++i) {
-            boost::filesystem::path current_file = i->path();
+        for (fs::recursive_directory_iterator i(file); i != end; ++i) {
+            fs::path current_file = i->path();
 
             files.push_back(current_file);
         }
     }else{
 
-        boost::filesystem::directory_iterator end_itr{};
+        fs::directory_iterator end_itr{};
         cout<<file.filename().string()<<":"<<endl;
 
-        for (auto itr = boost::filesystem::directory_iterator(file); itr != end_itr; ++itr) {
+        for (auto itr = fs::directory_iterator(file); itr != end_itr; ++itr) {
 
-            boost::filesystem::path current_file = itr->path();
+            fs::path current_file = itr->path();
 
             files.push_back(current_file);
         }
@@ -239,10 +240,10 @@ int directory_ls(boost::filesystem::path file){
     return 0;
 }
 
-int is_obj(boost::filesystem::path p){
+int is_obj(fs::path p){
     int merrno = 0;
 
-    if(boost::filesystem::is_directory(p)){
+    if(fs::is_directory(p)){
         merrno=directory_ls(p);
         if(merrno!=0){ return merrno;}
     } else{
@@ -255,7 +256,7 @@ int is_obj(boost::filesystem::path p){
 
 
 
-int listing(vector<boost::filesystem::path> &paths){
+int listing(vector<fs::path> &paths){
     int merrno = 0;
 
 
@@ -270,17 +271,17 @@ int listing(vector<boost::filesystem::path> &paths){
 
 int main(int argc, char *argv[]) {
 
-    vector<boost::filesystem::path> paths;
+    vector<fs::path> paths;
     string cur;
     int merrno = 0;
 
-    vector<boost::filesystem::path> files;
+    vector<fs::path> files;
 
     //if [-h |--help] - print help and exit with errno 0
     for (int i = 1; i < argc; i++) {
         string stmp{argv[i]};
 
-        boost::filesystem::path p{stmp};
+        fs::path p{stmp};
         if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
             if (double_dash) {
                 paths.push_back(p);
@@ -397,7 +398,7 @@ int main(int argc, char *argv[]) {
 
             string stmp{argv[i]};
 
-            boost::filesystem::path p{stmp};
+            fs::path p{stmp};
 
 
             paths.push_back(p);
