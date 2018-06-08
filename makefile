@@ -1,4 +1,4 @@
-all: myshell mycp myrm mycat myls mymkdir mymv
+all: myshell mycp myrm mycat myls mymkdir mymv mygrep
 
 myshell:
 	g++ myshell.cpp -o myshell -std=c++11 -lreadline
@@ -21,5 +21,8 @@ mymkdir:
 mymv:
 	g++-7 mymv_dir/mymv.cpp -o mymv -std=c++17 -lstdc++fs
 
+mygrep:
+	make -f mygrep_dir/makefile
+
 clean:
-	rm myshell mycp myrm mycat myls mymkdir mymv
+	rm myshell mycp myrm mycat myls mymkdir mymv mygrep
