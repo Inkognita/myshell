@@ -9,16 +9,22 @@ namespace fs = std::experimental::filesystem;
 using namespace std;
 
 
-bool get_user_answer(string question) {
+int get_user_answer(string question) {
     string answer;
-    while (answer != "Y" && answer != "N") {
-        cout << question << " ? Y/N :";
+    while (answer != "Y" && answer != "y" && answer != "n" && answer != "N" && answer != "A" && answer != "a" && answer != "c" && answer != "C") {
+        cout << question << " ? Y/N/A/C :";
         getline(cin, answer);
     }
     if (answer == "Y") {
-        return true;
+        return 1;
     }
-    return false;
+    else if (answer == "C") {
+        return 2;
+    }
+    else if (answer == "A") {
+        return 3;
+    }
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -50,9 +56,12 @@ int main(int argc, char *argv[]) {
 
     if (words.size() == 2 && fs::is_regular_file(words[0]) && !fs::is_directory(words[1])) {
         if (fs::exists(words[1])) {
-            if (forced || get_user_answer("Overwrite the file " + words[1])) {
+            int answ = get_user_answer("Overwrite the file " + words[1])
+            if (forced || answ == 1) {
                 fs::copy_file(words[0], words[1], fs::copy_options::overwrite_existing);
                 fs::remove(fs::path(words[0]));
+            } else if (answ== 3){
+                f = true;
             }
         } else {
             fs::copy_file(words[0], words[1]);
@@ -74,10 +83,13 @@ int main(int argc, char *argv[]) {
                     string path_to_create = fs::path(last_word) / words[i] / "";
 
                     if (fs::exists(path_to_create)) {
-                        if (forced || get_user_answer("Overwrite the dir " + path_to_create)) {
+                        int answ = get_user_answer("Overwrite the dir " + path_to_create);
+                        if (forced || answ == 1) {
                             fs::copy(words[i], path_to_create,
                                      fs::copy_options::overwrite_existing | fs::copy_options::recursive);
                             fs::remove_all(fs::path(words[i]));
+                        }else if (answ== 3){
+                            f = true;
                         }
                     } else {
                         fs::copy(words[i], path_to_create, fs::copy_options::recursive);
@@ -85,10 +97,14 @@ int main(int argc, char *argv[]) {
                     }
                 } else if (fs::is_regular_file(words[i])) {
                     string path_to_create = fs::path(last_word) / words[i];
+
                     if (fs::exists(path_to_create)) {
-                        if (forced || get_user_answer("Overwrite the dir " + path_to_create)) {
+                        int answ = get_user_answer("Overwrite the dir " + path_to_create);
+                        if (forced || answ == 1) {
                             fs::copy_file(words[i], path_to_create, fs::copy_options::overwrite_existing);
                             fs::remove(fs::path(words[i]));
+                        }else if (answ== 3){
+                            f = true;
                         }
                     } else {
                         fs::copy_file(words[i], path_to_create);

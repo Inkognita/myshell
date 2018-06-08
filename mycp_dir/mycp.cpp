@@ -9,16 +9,22 @@ namespace fs = std::experimental::filesystem;
 using namespace std;
 
 
-bool get_user_answer(string question) {
+int get_user_answer(string question) {
     string answer;
-    while (answer != "Y" && answer != "N") {
-        cout << question << " ? Y/N :";
+    while (answer != "Y" && answer != "y" && answer != "n" && answer != "N" && answer != "A" && answer != "a" && answer != "c" && answer != "C") {
+        cout << question << " ? Y/N/A/C :";
         getline(cin, answer);
     }
     if (answer == "Y") {
-        return true;
+        return 1;
     }
-    return false;
+    else if (answer == "C") {
+        return 2;
+    }
+    else if (answer == "A") {
+        return 3;
+    }
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
