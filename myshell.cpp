@@ -60,6 +60,10 @@ bool check_redirection(single_subprocess &subprocess, string &cur) {
 //    cout <<"HEA" << cur.find("<") << endl;
 //    cout <<"HEA" << cur << endl;
 
+    if(cur == "&") {
+        subprocess.deattach = true;
+        return true;
+    }
     if (cur.find("1>") == 0 && cur.size() != 2) {
         subprocess.output_file = cur.substr(2);
     } else if (cur.find('>') == 0 && cur.size() != 1) {
@@ -284,6 +288,7 @@ std::vector<single_subprocess> divide_into_argumens(std::string &line) {
         return subprocesses;
     }
     single_subprocess current_subproc{};
+    current_subproc.deattach = false;
     std::string current_word{};
     bool opened_single_quotes = false;
     bool opened_double_quotes = false;
@@ -397,6 +402,7 @@ std::vector<single_subprocess> divide_into_argumens(std::string &line) {
                 }
                 subprocesses.push_back(current_subproc);
                 current_subproc = single_subprocess();
+                current_subproc.deattach = false;
                 parameters.clear();
             }
         } else if (symbol == '#') {
