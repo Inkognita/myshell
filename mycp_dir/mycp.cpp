@@ -1,12 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include <experimental/filesystem>
+//#include <boost/filesystem.hpp>
+
 #include <string>
 #include <stdio.h>
 #include <vector>
 
 namespace fs = std::experimental::filesystem;
 using namespace std;
+//namespace fs = boost::filesystem;
 
 
 int get_user_answer(string question) {
@@ -61,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     if (words.size() == 2 && fs::is_regular_file(words[0]) && !fs::is_directory(words[1])) {
         if (fs::exists(words[1])) {
-            int answ = get_user_answer("Overwrite the dir " + path_to_create);
+            int answ = get_user_answer("Overwrite the dir " + words[1]);
             if (forced || answ == 1) {
                 fs::copy_file(words[0], words[1], fs::copy_options::overwrite_existing);
             }else if (answ== 3){
