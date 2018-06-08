@@ -14,16 +14,22 @@ using namespace std;
 bool R = false;
 bool f = false;
 
-bool get_user_answer(string question) {
+int get_user_answer(string question) {
     string answer;
-    while (answer != "Y" && answer != "y" && answer != "n" && answer != "N") {
-        cout << question << " ? Y/N :";
+    while (answer != "Y" && answer != "y" && answer != "n" && answer != "N" && answer != "A" && answer != "a" && answer != "c" && answer != "C") {
+        cout << question << " ? Y/N/A/C :";
         getline(cin, answer);
     }
     if (answer == "Y") {
-        return true;
+        return 1;
     }
-    return false;
+    else if (answer == "C") {
+        return 2;
+    }
+    else if (answer == "A") {
+        return 3;
+    }
+    return 0;
 }
 
 int rm_dir(string file){
@@ -55,9 +61,17 @@ int rm_file(string file){
             boost::filesystem::remove( file);
                 return 0;
         }
-
-        if(get_user_answer("Are you sure")){
+        int ans = get_user_answer("Are you sure");
+        if(ans == 1){
             boost::filesystem::remove( file);
+            return 0;
+        }
+        else if(ans == 3){
+            f = true;
+            return 0;
+        }
+        else if(ans == 2){
+
             return 0;
         }
 
