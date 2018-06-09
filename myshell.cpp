@@ -496,21 +496,21 @@ void create_subprocess(single_subprocess subproc) {
         if (!subproc.input_file.empty()) {
             close(STDIN_FILENO);
             if ((cin_desc = open(subproc.input_file.c_str(), O_RDONLY | O_CREAT,
-                                 S_IWOTH | S_IRGRP | S_IWGRP | S_IROTH | S_IRUSR | S_IWUSR)) < 0)
+                                 S_IRWXU | S_IRWXG | S_IRWXO)) < 0)
                 cerr << "no file " << subproc.input_file;
             dup2(cin_desc, STDIN_FILENO);
         }
         if (!subproc.output_file.empty()) {
             close(STDOUT_FILENO);
             if ((cout_desc = open(subproc.output_file.c_str(), O_WRONLY | O_CREAT,
-                                  S_IWOTH | S_IRGRP | S_IWGRP | S_IROTH | S_IRUSR | S_IWUSR)) < 0)
+                                  S_IRWXU | S_IRWXG | S_IRWXO)) < 0)
                 cerr << "no file " << subproc.output_file;
             dup2(cout_desc, STDOUT_FILENO);
         }
         if (!subproc.err_output_file.empty()) {
             close(STDERR_FILENO);
             if ((cerr_desc = open(subproc.err_output_file.c_str(), O_WRONLY | O_CREAT,
-                                  S_IWOTH | S_IRGRP | S_IWGRP | S_IROTH | S_IRUSR | S_IWUSR)) < 0)
+                                  S_IRWXU | S_IRWXG | S_IRWXO)) < 0)
                 cerr << "no file " << subproc.output_file;
             dup2(cerr_desc, STDERR_FILENO);
         }
@@ -521,7 +521,6 @@ void create_subprocess(single_subprocess subproc) {
 
 
 }
-
 
 inline bool file_exists(const std::string &name) {
     struct stat buffer{};
